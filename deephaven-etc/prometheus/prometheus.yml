@@ -1,0 +1,41 @@
+# Example Prometheus (server) configuration file.
+
+global:
+  scrape_interval:     15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+
+  # Attach these labels to any time series or alerts when communicating with
+  # external systems (federation, remote storage, Alertmanager).
+#  external_labels:
+#      monitor: 'codelab-monitor'
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  # - "first.rules"
+  # - "second.rules"
+
+# A scrape configuration containing exactly one endpoint to scrape:
+scrape_configs:
+
+# Scrape from the Deephaven status dashboard process
+  - job_name: 'deephaven1'
+    scrape_interval: 5s
+    scheme: https
+    # If you're using Envoy you'll need to add the metrics_path and update the targets to use the Envoy port:
+    # metrics_path: '/status_dashboard/metrics'
+    static_configs:
+      - targets: ['localhost.int.illumon.com:8112']
+    basic_auth:
+      username: iris
+      password: iris
+
+# Scrape from the host's node exporter
+  - job_name: 'deephaven2'
+    scrape_interval: 5s
+    # If you're using Envoy or configure the exporter with SSL you'll need to add the scheme:
+    # scheme: https
+    # If you're using Envoy you'll need to add the metrics_path and update the targets to use the Envoy port:
+    # metrics_path: '/node_exporter/metrics'
+    static_configs:
+      - targets: ['localhost.int.illumon.com:9100']

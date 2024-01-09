@@ -8,8 +8,10 @@ services:
 
   prometheus:
     image: prom/prometheus:v2.36.2
+    extra_hosts:
+      - localhost.int.illumon.com:host-gateway
     volumes:
-      - ./prometheus/:/etc/prometheus/
+      - ./deephaven-etc/prometheus:/etc/prometheus/
       - prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -25,11 +27,13 @@ services:
     user: "472"
     depends_on:
       - prometheus
+    extra_hosts:
+      - localhost.int.illumon.com:host-gateway
     ports:
       - 3000:3000
     volumes:
       - grafana_data:/var/lib/grafana
-      - ./grafana/provisioning/:/etc/grafana/provisioning/
+      - ./deephaven-etc/grafana/:/etc/grafana/provisioning/
     env_file:
       - ./grafana/config.monitoring
     restart: always
