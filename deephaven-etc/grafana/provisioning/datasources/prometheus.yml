@@ -17,6 +17,7 @@ datasources:
   access: proxy
   # <int> org id. will default to orgId 1 if not specified
   orgId: 1
+  uid: "Prometheus"
   # <string> url
   url: http://prometheus:9090
   # <string> database password, if used
