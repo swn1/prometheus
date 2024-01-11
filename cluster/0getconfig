@@ -1,0 +1,74 @@
+#!/bin/bash
+############################################################
+# Help                                                     #
+############################################################
+Help()
+{
+   # Display Help
+   echo "Pull configuration file from a Deephaven cluster into directory."
+   echo
+   echo "Syntax: $0 [-h|-d <domainname>] <clustername>"
+   echo "i.e. DH_CLUSTER_NAME, nothing more."
+   echo "options:"
+   echo "h     Print this Help."
+   echo "d     Domain name of cluster, default $(hostname -d)"
+   echo
+}
+
+############################################################
+############################################################
+# Main program                                             #
+############################################################
+############################################################
+
+# Set variables
+domain=$(hostname -d)
+
+############################################################
+# Process the input options. Add options as needed.        #
+############################################################
+# Get the options
+declare -a ARGS
+while [ $# -gt 0 ]
+do
+	unset OPTIND
+	unset OPTARG
+	if getopts ":hd:" option
+	then
+	   case $option in
+	      h) # display Help
+		 Help
+		 exit;;
+	      d) # Enter a name
+		 domain=$OPTARG;;
+	     \?) # Invalid option
+		 echo "Error: Invalid option"
+		 Help
+		 exit;;
+	     \:) # missing parameter
+		 Help
+		 echo "Error: Missing argument"
+		 exit;;
+	   esac
+	   shift $((OPTIND-1))
+	else
+	   ARGS+=($1)
+	   shift
+	fi
+done	
+if [ ${#ARGS[@]} -ne 1 ]
+then
+	Help
+	exit
+fi
+cluster=${ARGS[0]}
+
+scp $cluster-cluster-infra-1.$domain:/etc/sysconfig/deephaven/cluster.cnf .
+
+# validate
+source cluster.cnf
+if [ "$cluster" != "${DH_CLUSTER_NAME}" ]
+then
+	echo "Warning: cluster name does not match"
+	exit 1
+fi

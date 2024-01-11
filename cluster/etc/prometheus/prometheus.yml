@@ -1,0 +1,24 @@
+# generated Prometheus configuration file
+
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first.rules"
+  # - "second.rules"
+
+scrape_configs:
+
+# Scrape from the Deephaven status dashboard process
+  - job_name: 'deephaven'
+    scrape_interval: 5s
+    scheme: https
+    # If you're using Envoy you'll need to add the metrics_path and update the targets to use the Envoy port:
+    metrics_path: '/status_dashboard/metrics'
+    static_configs:
+      - targets: ['qa-vplus-java17-cluster-infra-1.int.illumon.com:8000']
+    basic_auth:
+      username: iris
+      password: iris
+

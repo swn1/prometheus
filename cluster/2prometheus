@@ -1,0 +1,84 @@
+#!/bin/bash
+source cluster.cnf
+exec 1>etc/prometheus/prometheus.yml
+
+cat << EOF
+# generated Prometheus configuration file
+
+global:
+  scrape_interval:     15s
+  evaluation_interval: 15s
+
+rule_files:
+  # - "first.rules"
+  # - "second.rules"
+
+scrape_configs:
+
+EOF
+
+if [ "${DH_NODE_1_ROLE_DASHBOARD}" != "true" ]
+then
+	echo "expected status_dashboard on node 1, add logic" >&2
+	exit 1
+fi
+
+if [ "${DH_CONFIGURE_ENVOY}" == "true" ]
+then
+	envoy=true
+else
+	envoy=false
+fi
+
+cat << EOF
+# Scrape from the Deephaven status dashboard process
+  - job_name: 'deephaven'
+    scrape_interval: 5s
+    scheme: https
+    # If you're using Envoy you'll need to add the metrics_path and update the targets to use the Envoy port:
+EOF
+
+if $envoy
+then
+cat << EOF
+    metrics_path: '/status_dashboard/metrics'
+    static_configs:
+      - targets: ['${DH_ENVOY_FQDN}:${DH_ENVOY_PORT}']
+EOF
+else
+cat << EOF
+    # metrics_path: '/status_dashboard/metrics'
+    static_configs:
+      - targets: ['${DH_NODE_1_NAME}.${DH_DOMAIN_ROOT}:${DH_STATUS_DASHBOARD_WEB_SOCKET}']
+EOF
+fi
+
+cat << EOF
+    basic_auth:
+      username: iris
+      password: iris
+
+EOF
+
+# not hooking up node_exporter yet
+exit
+
+nodes=(${DH_ALL_NODES})
+for node in "${nodes[@]}"
+do
+IFS=- read -ra parts <<<"$node"
+shortnode=${parts[@]: -2:1}_${parts[@]: -1}
+
+cat << EOF
+# Scrape from the host's node exporter
+  - job_name: '${shortnode}'
+    scrape_interval: 5s
+    # If you're using Envoy or configure the exporter with SSL you'll need to add the scheme:
+    # scheme: https
+    # If you're using Envoy you'll need to add the metrics_path and update the targets to use the Envoy port:
+    # metrics_path: '/node_exporter_${shortnode}/metrics'
+    static_configs:
+      - targets: ['${node}.${DH_DOMAIN_ROOT}:9100']
+
+EOF
+done
